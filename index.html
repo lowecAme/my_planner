@@ -214,7 +214,7 @@ function vWeek(){
   return wd.map((d,i)=>`<div class="card"><div class="wd ${d===td?"t":""}">${DN[i]}, ${new Date(d).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</div><textarea data-a="weekTx" data-d="${d}" placeholder="План на день" aria-label="План на ${DN[i]}">${esc(S.week[d]||"")}</textarea></div>`).join("");
 }
 function vData(){
-  return `<div class="card"><b>Синхронизация (Яндекс Диск)</b><p class="sub" id="sy" style="margin:6px 0 10px">${esc(ystat)}</p><div class="foot">${yok()?`<button class="btn" data-a="ysync">Синхронизировать</button><button class="btn ghost" data-a="ytest">Проверить соединение</button><button class="btn ghost" data-a="ylogout">Выйти</button>`:`<button class="btn" data-a="ylogin">Войти через Яндекс</button>`}</div><div class="row" style="margin:10px 0"><input class="grow" id="px" placeholder="Адрес посредника: https://….workers.dev" value="${esc(pxget())}" aria-label="Адрес посредника"><button class="btn ghost" data-a="pxsave">Сохранить</button></div><p class="sub" style="margin-bottom:0">Данные хранятся одним файлом planner.json в папке приложения на вашем Диске (раздел «Приложения»).</p><p class="sub" style="margin:6px 0 0;font-size:12px">Версия: 16</p></div>`;
+  return `<div class="card"><b>Синхронизация (Яндекс Диск)</b><p class="sub" id="sy" style="margin:6px 0 10px">${esc(ystat)}</p><div class="foot">${yok()?`<button class="btn" data-a="ysync">Синхронизировать</button><button class="btn ghost" data-a="ytest">Проверить соединение</button><button class="btn ghost" data-a="ylogout">Выйти</button>`:`<button class="btn" data-a="ylogin">Войти через Яндекс</button>`}</div><div class="row" style="margin:10px 0"><input class="grow" id="px" placeholder="Адрес посредника: https://….workers.dev" value="${esc(pxget())}" aria-label="Адрес посредника"><button class="btn ghost" data-a="pxsave">Сохранить</button></div><p class="sub" style="margin-bottom:0">Данные хранятся одним файлом planner.json в папке приложения на вашем Диске (раздел «Приложения»).</p><p class="sub" style="margin:6px 0 0;font-size:12px">Версия: 17</p></div>`;
 }
 
 document.addEventListener("click",e=>{
@@ -290,13 +290,14 @@ window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS
 if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 let prev="tasks";
-function go(t,dir){if(t===tab)return;if(t==="data")prev=tab;tab=t;location.hash=t;render();
+function go(t,dir){if(t===tab)return;if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();if(t==="data")prev=tab;tab=t;location.hash=t;render();
   const v=$("#view");v.classList.remove("sl","sr");void v.offsetWidth;if(dir)v.classList.add(dir==="right"?"sr":"sl");window.scrollTo(0,0)}
 let sx=0,sy=0,sk=false;
-document.addEventListener("touchstart",e=>{const t=e.touches[0];sx=t.clientX;sy=t.clientY;sk=e.touches.length>1||!!e.target.closest('div[style*="overflow-x"],input,select')},{passive:true});
+document.addEventListener("touchstart",e=>{const t=e.touches[0];sx=t.clientX;sy=t.clientY;sk=e.touches.length>1||!!e.target.closest('div[style*="overflow-x"],input,select,textarea')},{passive:true});
 document.addEventListener("touchend",e=>{if(sk)return;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
   if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.6)return;
-  if(dx<0&&tab!=="data")go("data","left");else if(dx>0&&tab==="data")go(prev,"right")},{passive:true});
+  if(tab==="data")return;const o=TABS.filter(x=>x[0]!=="data").map(x=>x[0]),i=o.indexOf(tab),n=dx<0?i+1:i-1;
+  if(n>=0&&n<o.length)go(o[n],dx<0?"left":"right")},{passive:true});
 (function(){const h=location.hash;if(h.includes("access_token=")){const p=new URLSearchParams(h.slice(1));if(p.get("access_token")){Y={t:p.get("access_token"),exp:Date.now()+(parseInt(p.get("expires_in"))||31536000)*1000,last:Y.last||0};ysave();tab="data";ystat="Вход выполнен"}history.replaceState(null,"",location.pathname+"#data")}})();
 render();
 if(yok())ysync();
