@@ -229,13 +229,13 @@ const YID="1f5f8956cd144f9b82b7a4e8bca74246",YK="planner-yd",API="https://cloud-
 let Y={};try{Y=JSON.parse(localStorage.getItem(YK))||{}}catch(e){}
 const ysave=()=>{try{localStorage.setItem(YK,JSON.stringify(Y))}catch(e){}};
 const yok=()=>!!(Y.t&&Y.exp>Date.now());
-let ystat=yok()?"Вход выполнен":"Вход не выполнен",ybusy=false,ytimer;
+let ystage="",ystat=yok()?"Вход выполнен":"Вход не выполнен",ybusy=false,ytimer;
 function setSt(m){ystat=m;const e=$("#sy");if(e)e.textContent=m}
 const yf=(u,o={})=>fetch(u,{...o,headers:{Authorization:"OAuth "+Y.t}});
 function yerr(e){if(e.message==="auth"){Y={};ysave();setSt("Нужно войти снова");render();return}
-  setSt(e instanceof TypeError?"Браузер не смог связаться с Яндекс Диском (запрос заблокирован или нет сети): "+e.message:"Ошибка синхронизации: "+e.message)}
-async function ydown(){const r=await yf(API+"/download?path="+encodeURIComponent(YP));if(r.status===404)return null;if(r.status===401)throw new Error("auth");if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json(),f=await fetch(j.href);if(!f.ok)throw new Error("HTTP "+f.status);return f.json()}
-async function yup(){const r=await yf(API+"/upload?path="+encodeURIComponent(YP)+"&overwrite=true");if(r.status===401)throw new Error("auth");if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json(),u=await fetch(j.href,{method:"PUT",body:JSON.stringify(S)});if(!u.ok)throw new Error("HTTP "+u.status);Y.last=S.ts||0;ysave()}
+  setSt(e instanceof TypeError?"Браузер не смог связаться с Яндекс Диском на шаге «"+ystage+"» (запрос заблокирован или нет сети): "+e.message:"Ошибка синхронизации: "+e.message)}
+async function ydown(){ystage="запрос ссылки на скачивание";const r=await yf(API+"/download?path="+encodeURIComponent(YP));if(r.status===404)return null;if(r.status===401)throw new Error("auth");if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json();ystage="скачивание файла";const f=await fetch(j.href);if(!f.ok)throw new Error("HTTP "+f.status);return f.json()}
+async function yup(){ystage="запрос ссылки для загрузки";const r=await yf(API+"/upload?path="+encodeURIComponent(YP)+"&overwrite=true");if(r.status===401)throw new Error("auth");if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json();ystage="загрузка файла";const u=await fetch(j.href,{method:"PUT",body:JSON.stringify(S)});if(!u.ok)throw new Error("HTTP "+u.status);Y.last=S.ts||0;ysave()}
 function ytake(rm){S=Object.assign({tasks:[],habits:[],exp:[],inc:[],acc:[],debt:[],bud:0,week:{}},rm);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}Y.last=S.ts||0;ysave();render()}
 async function ysync(){
   if(!yok()||ybusy)return;ybusy=true;setSt("Синхронизация…");
@@ -249,7 +249,7 @@ async function ysync(){
   catch(e){yerr(e)}
   ybusy=false}
 function syncSoon(){clearTimeout(ytimer);if(yok())ytimer=setTimeout(ysync,3000)}
-async function ytest(){setSt("Проверяю…");try{const r=await yf(API+"?path="+encodeURIComponent("app:/"));setSt(r.ok||r.status===404?"Соединение с Яндекс Диском работает":r.status===401?"Токен не подошёл, войдите снова":"Ответ Диска: HTTP "+r.status)}catch(e){yerr(e)}}
+async function ytest(){ystage="проверка доступа к Диску";setSt("Проверяю…");try{const r=await yf(API+"?path="+encodeURIComponent("app:/"));setSt(r.ok||r.status===404?"Соединение с Яндекс Диском работает":r.status===401?"Токен не подошёл, войдите снова":"Ответ Диска: HTTP "+r.status)}catch(e){yerr(e)}}
 function act(a,d){
   if(a==="addTask"){const t=$("#tt").value.trim();if(!t)return $("#tt").focus();S.tasks.push({id:uid(),t,due:$("#td").value,pr:$("#tp").value,who:$("#tw").value.trim(),rec:$("#tr").value.trim(),done:false})}
   else if(a==="calMode"){cal.m=d.m;cal.o=0}
