@@ -76,6 +76,7 @@ html,body{overscroll-behavior:none}body{touch-action:pan-y pinch-zoom}div[style*
 @keyframes inr{from{opacity:.4;transform:translateX(-14px)}to{opacity:1;transform:none}}
 #view.sl{animation:inl .18s ease-out}#view.sr{animation:inr .18s ease-out}
 @media (prefers-reduced-motion:reduce){#view.sl,#view.sr{animation:none}}
+.dn{display:flex;gap:14px;align-items:center}.dn svg{width:120px;flex:none}.lg{flex:1;min-width:0;font-size:14px}.lg .row{margin:3px 0;justify-content:space-between}.lg span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -152,7 +153,8 @@ function vHabits(){
     return `<div class="hgrid" style="margin-top:10px;--hc:var(--h${h.c||0})"><div><div class="hn"><i class="sw"></i>${esc(h.name)}</div><div class="streak">Серия: ${st} дн. <button class="x" style="font-size:14px;padding:0 4px" data-a="delHabit" data-id="${h.id}" aria-label="Удалить привычку">удалить</button></div></div>${wd.map(d=>`<button class="dot ${h.days[d]?"on":""}" data-a="togHabit" data-id="${h.id}" data-d="${d}" aria-label="${h.name}, ${d}"></button>`).join("")}</div>`}).join("");
   return `<div class="card"><div class="row"><input class="grow" id="hn" placeholder="Новая привычка" aria-label="Новая привычка"><button class="btn" data-a="addHabit">Добавить</button></div></div>
   <div class="card">${S.habits.length?head+rows:`<div class="empty">Привычек пока нет. Например, «Зарядка» или «Вода 2 л».</div>`}</div>
-  ${S.habits.length?`<div class="card"><div class="sub" style="margin:0 0 6px">Выполнено за неделю, %</div>${bars(wd.map(d=>Math.round(S.habits.filter(h=>h.days[d]).length/S.habits.length*100)),DN,v=>v+"%")}</div>`:""}${S.habits.length?vHM():""}`;
+  ${S.habits.length?`<div class="card"><div class="sub" style="margin:0 0 6px">Выполнено за неделю, %</div>${bars(wd.map(d=>Math.round(S.habits.filter(h=>h.days[d]).length/S.habits.length*100)),DN,v=>v+"%")}
+  <div class="sub" style="margin:12px 0 4px">Неделя в целом</div>${(()=>{const w=wd.filter(d=>d<=td),dn=w.reduce((a,d)=>a+S.habits.filter(h=>h.days[d]).length,0),all=w.length*S.habits.length;return donut([{v:dn,c:"var(--ac)",l:"Выполнено",t:dn},{v:Math.max(0,all-dn),c:"var(--mut)",l:"Пропущено",t:Math.max(0,all-dn)}],all?Math.round(dn/all*100)+"%":"0%")})()}</div>`:""}${S.habits.length?vHM():""}`;
 }
 let hm=0;
 function line(v,lb){const W=300,H=90,st=W/(v.length-1||1),pts=v.map((y,i)=>`${i*st},${H-y/100*H}`).join(" ");return `<svg viewBox="0 0 ${W} ${H+20}" width="100%" style="overflow:visible" role="img" aria-label="График по дням"><polygon points="0,${H} ${pts} ${W},${H}" style="fill:var(--acs)"/><polyline points="${pts}" fill="none" stroke-width="2" style="stroke:var(--ac)"/>${v.map((y,i)=>lb[i]?`<text x="${i*st}" y="${H+14}" text-anchor="middle" font-size="10" style="fill:var(--mut)">${lb[i]}</text>`:"").join("")}</svg>`}
@@ -160,7 +162,7 @@ function vHM(){
   const n=new Date(),f=new Date(n.getFullYear(),n.getMonth()+hm,1),N=new Date(f.getFullYear(),f.getMonth()+1,0).getDate(),td=today(),H=S.habits;
   const ds=[...Array(N)].map((_,i)=>iso(new Date(f.getFullYear(),f.getMonth(),i+1))),el=ds.filter(d=>d<=td);
   const hs=H.map(h=>{const k=el.filter(d=>h.days[d]).length;let best=0,c=0;ds.forEach(d=>{c=h.days[d]?c+1:0;best=Math.max(best,c)});return{h,k,best,p:el.length?Math.round(k/el.length*100):0}});
-  const all=el.length?Math.round(hs.reduce((a,x)=>a+x.k,0)/(el.length*H.length)*100):0;
+  const dn=hs.reduce((a,x)=>a+x.k,0),miss=Math.max(0,el.length*H.length-dn),all=el.length?Math.round(hs.reduce((a,x)=>a+x.k,0)/(el.length*H.length)*100):0;
   const cnt=ds=>ds.reduce((a,d)=>a+H.filter(h=>h.days[d]).length,0);
   const dayP=ds.map(d=>d>td?0:Math.round(cnt([d])/H.length*100)),wp=[];
   for(let i=0;i<N;i+=7){const w=ds.slice(i,i+7).filter(d=>d<=td);wp.push(w.length?Math.round(cnt(w)/(w.length*H.length)*100):0)}
@@ -169,6 +171,8 @@ function vHM(){
   <div class="card"><div class="sub" style="margin:0 0 4px">Прогресс по дням, %</div>${line(dayP,ds.map((_,i)=>i%5===0?i+1:""))}
   <div class="sub" style="margin:12px 0 4px">По неделям месяца, %</div>${bars(wp,wp.map((_,i)=>"Н"+(i+1)),v=>v+"%")}
   <div class="sub" style="margin:12px 0 0">По каждой привычке, %</div>${hs.map(x=>`<div class="cat" style="--hc:var(--h${x.h.c||0})"><div class="row"><span><i class="sw"></i>${esc(x.h.name)}</span><span>${x.p}%</span></div><div class="bar"><i style="width:${x.p}%"></i></div></div>`).join("")}</div>
+  <div class="card"><div class="sub" style="margin:0 0 6px">Месяц в целом</div>${donut([{v:dn,c:"var(--ac)",l:"Выполнено",t:dn},{v:miss,c:"var(--mut)",l:"Пропущено",t:miss}],all+"%")}
+  <div class="sub" style="margin:12px 0 6px">Вклад каждой привычки</div>${donut(hs.map(x=>({v:x.k,c:"var(--h"+(x.h.c||0)+")",l:esc(x.h.name),t:x.k})),dn)}</div>
   <div class="card"><div class="sub" style="margin:0 0 4px">Итоги месяца: ${all}% по всем привычкам</div>${hs.map(x=>`<div class="item" style="--hc:var(--h${x.h.c||0})"><span class="tx"><i class="sw"></i>${esc(x.h.name)}<div class="due">${x.k} из ${el.length} дн. · лучшая серия ${x.best}</div></span><b>${x.p}%</b></div>`).join("")}</div>`;
 }
 const sum=(l,f)=>l.reduce((a,x)=>a+f(x),0);
@@ -194,9 +198,13 @@ function dash(p){
   <div class="card"><b>Расходы и дневной бюджет</b>
   ${bud?`<div class="row" style="justify-content:space-between;margin-top:8px"><span>Сегодня</span><span style="${ts>bud?"color:var(--warn);font-weight:700":""}">${fmt(ts)} из ${fmt(bud)}</span></div><div class="bar" style="--hc:${ts>bud?"var(--warn)":"var(--ac)"}"><i style="width:${Math.min(100,ts/bud*100)}%"></i></div>`:`<div class="sub" style="margin:4px 0 8px">Задайте дневной бюджет выше, и превышения будут красными.</div>`}
   <div style="margin-top:10px">${dayBars(v,bud,ti,pe)}</div></div>
-  <div class="card"><b>Куда уходят деньги</b>${cs.length?cs.map(([c,x])=>`<div class="cat"><div class="row"><span>${c}</span><span>${fmt(x)} · ${Math.round(x/exT*100)}%</span></div><div class="bar"><i style="width:${x/mx*100}%"></i></div></div>`).join(""):`<div class="empty">Расходов в этом месяце пока нет.</div>`}
+  <div class="card"><b>Куда уходят деньги</b>${cs.length?donut(cs.map(([c,x])=>({v:x,c:"var(--h"+Math.max(0,CATS.indexOf(c))+")",l:c,t:Math.round(x/exT*100)+"%"})),cmp.format(exT)):""}${cs.length?cs.map(([c,x])=>`<div class="cat"><div class="row"><span>${c}</span><span>${fmt(x)} · ${Math.round(x/exT*100)}%</span></div><div class="bar"><i style="width:${x/mx*100}%"></i></div></div>`).join(""):`<div class="empty">Расходов в этом месяце пока нет.</div>`}
+  <div class="sub" style="margin:12px 0 4px">Доходы и расходы месяца</div>${donut([{v:inT,c:"var(--ac)",l:"Доходы",t:fmt(inT)},{v:exT,c:"var(--warn)",l:"Расходы",t:fmt(exT)}],cmp.format(inT-exT))}
   <div class="sub" style="margin:12px 0 4px">Расходы по месяцам</div>${bars(ms.map(([k])=>sum(S.exp.filter(e=>e.d.slice(0,7)===k),e=>e.a)),ms.map(x=>x[1]),x=>cmp.format(x))}</div>`;
 }
+function donut(sl,center){const C=2*Math.PI*40,t=sl.reduce((a,x)=>a+x.v,0);let off=0;
+  const arcs=t?sl.filter(x=>x.v>0).map(x=>{const l=x.v/t*C,s=`<circle cx="60" cy="60" r="40" fill="none" stroke-width="18" style="stroke:${x.c}" stroke-dasharray="${l} ${C-l}" stroke-dashoffset="${-off}" transform="rotate(-90 60 60)"/>`;off+=l;return s}).join(""):"";
+  return `<div class="dn"><svg viewBox="0 0 120 120" role="img" aria-label="Круговая диаграмма"><circle cx="60" cy="60" r="40" fill="none" stroke-width="18" style="stroke:var(--acs)"/>${arcs}<text x="60" y="65" text-anchor="middle" font-size="15" font-weight="700" style="fill:var(--ink)">${center}</text></svg><div class="lg">${sl.map(x=>`<div class="row"><span><i class="sw" style="--hc:${x.c}"></i>${x.l}</span><b>${x.t}</b></div>`).join("")}</div></div>`}
 function vMoney(){
   const last=[...S.exp.map(e=>({...e,k:"exp"})),...S.inc.map(e=>({...e,k:"inc"}))].sort((a,b)=>b.d.localeCompare(a.d)).slice(0,10);
   const ab=a=>a.b0+sum(S.inc.filter(e=>e.acc===a.id),e=>e.a)-sum(S.exp.filter(e=>e.acc===a.id),e=>e.a);
@@ -215,7 +223,7 @@ function vWeek(){
   return wd.map((d,i)=>`<div class="card"><div class="wd ${d===td?"t":""}">${DN[i]}, ${new Date(d).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</div><textarea data-a="weekTx" data-d="${d}" placeholder="План на день" aria-label="План на ${DN[i]}">${esc(S.week[d]||"")}</textarea></div>`).join("");
 }
 function vData(){
-  return `<div class="card"><b>Синхронизация (Яндекс Диск)</b><p class="sub" id="sy" style="margin:6px 0 10px">${esc(ystat)}</p><div class="foot">${yok()?`<button class="btn" data-a="ysync">Синхронизировать</button><button class="btn ghost" data-a="ytest">Проверить соединение</button><button class="btn ghost" data-a="ylogout">Выйти</button>`:`<button class="btn" data-a="ylogin">Войти через Яндекс</button>`}</div><div class="row" style="margin:10px 0"><input class="grow" id="px" placeholder="Адрес посредника: https://….workers.dev" value="${esc(pxget())}" aria-label="Адрес посредника"><button class="btn ghost" data-a="pxsave">Сохранить</button></div><p class="sub" style="margin-bottom:0">Данные хранятся одним файлом planner.json в папке приложения на вашем Диске (раздел «Приложения»).</p><p class="sub" style="margin:6px 0 0;font-size:12px">Версия: 18</p></div>`;
+  return `<div class="card"><b>Синхронизация (Яндекс Диск)</b><p class="sub" id="sy" style="margin:6px 0 10px">${esc(ystat)}</p><div class="foot">${yok()?`<button class="btn" data-a="ysync">Синхронизировать</button><button class="btn ghost" data-a="ytest">Проверить соединение</button><button class="btn ghost" data-a="ylogout">Выйти</button>`:`<button class="btn" data-a="ylogin">Войти через Яндекс</button>`}</div><div class="row" style="margin:10px 0"><input class="grow" id="px" placeholder="Адрес посредника: https://….workers.dev" value="${esc(pxget())}" aria-label="Адрес посредника"><button class="btn ghost" data-a="pxsave">Сохранить</button></div><p class="sub" style="margin-bottom:0">Данные хранятся одним файлом planner.json в папке приложения на вашем Диске (раздел «Приложения»).</p><p class="sub" style="margin:6px 0 0;font-size:12px">Версия: 0.19</p></div>`;
 }
 
 document.addEventListener("click",e=>{
@@ -297,8 +305,8 @@ let sx=0,sy=0,sk=false;
 document.addEventListener("touchstart",e=>{const t=e.touches[0];sx=t.clientX;sy=t.clientY;sk=e.touches.length>1||!!e.target.closest('div[style*="overflow-x"],input,select,textarea')},{passive:true});
 document.addEventListener("touchend",e=>{if(sk)return;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
   if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.6)return;
-  if(tab==="data")return;const o=TABS.filter(x=>x[0]!=="data").map(x=>x[0]),i=o.indexOf(tab),n=dx<0?i+1:i-1;
-  if(n>=0&&n<o.length)go(o[n],dx<0?"left":"right")},{passive:true});
+  if(tab==="data")return;const o=TABS.filter(x=>x[0]!=="data").map(x=>x[0]),i=o.indexOf(tab),n=(i+(dx<0?1:o.length-1))%o.length;
+  go(o[n],dx<0?"left":"right")},{passive:true});
 (function(){const h=location.hash;if(h.includes("access_token=")){const p=new URLSearchParams(h.slice(1));if(p.get("access_token")){Y={t:p.get("access_token"),exp:Date.now()+(parseInt(p.get("expires_in"))||31536000)*1000,last:Y.last||0};ysave();tab="data";ystat="Вход выполнен"}history.replaceState(null,"",location.pathname+"#data")}})();
 render();
 if(yok())ysync();
