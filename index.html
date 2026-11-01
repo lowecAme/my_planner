@@ -209,7 +209,7 @@ function vWeek(){
 function vData(){
   return `<div class="card"><p style="margin-top:0">Данные хранятся в этом браузере. Сохраняйте копию файлом: так вы перенесёте их на другое устройство или восстановите после сбоя.</p>
   <div class="foot"><button class="btn" data-a="export">Сохранить копию</button><label class="btn ghost" style="cursor:pointer">Загрузить копию<input type="file" id="imp" accept="application/json" hidden></label></div><div id="msg"></div></div>
-  <div class="card"><b>Синхронизация (Яндекс Диск)</b><p class="sub" id="sy" style="margin:6px 0 10px">${esc(ystat)}</p><div class="foot">${yok()?`<button class="btn" data-a="ysync">Синхронизировать</button><button class="btn ghost" data-a="ytest">Проверить соединение</button><button class="btn ghost" data-a="ylogout">Выйти</button>`:`<button class="btn" data-a="ylogin">Войти через Яндекс</button>`}</div><div class="row" style="margin:10px 0"><input class="grow" id="px" placeholder="Адрес посредника: https://….workers.dev" value="${esc(pxget())}" aria-label="Адрес посредника"><button class="btn ghost" data-a="pxsave">Сохранить</button></div><p class="sub" style="margin-bottom:0">Данные хранятся одним файлом planner.json в папке приложения на вашем Диске (раздел «Приложения»).</p><p class="sub" style="margin:6px 0 0;font-size:12px">Версия: 13</p></div>`;
+  <div class="card"><b>Синхронизация (Яндекс Диск)</b><p class="sub" id="sy" style="margin:6px 0 10px">${esc(ystat)}</p><div class="foot">${yok()?`<button class="btn" data-a="ysync">Синхронизировать</button><button class="btn ghost" data-a="ytest">Проверить соединение</button><button class="btn ghost" data-a="ylogout">Выйти</button>`:`<button class="btn" data-a="ylogin">Войти через Яндекс</button>`}</div><div class="row" style="margin:10px 0"><input class="grow" id="px" placeholder="Адрес посредника: https://….workers.dev" value="${esc(pxget())}" aria-label="Адрес посредника"><button class="btn ghost" data-a="pxsave">Сохранить</button></div><p class="sub" style="margin-bottom:0">Данные хранятся одним файлом planner.json в папке приложения на вашем Диске (раздел «Приложения»).</p><p class="sub" style="margin:6px 0 0;font-size:12px">Версия: 14</p></div>`;
 }
 
 document.addEventListener("click",e=>{
@@ -237,8 +237,8 @@ function yerr(e){if(e.message==="auth"){Y={};ysave();setSt("Нужно войт�
 const PXK="planner-px";
 const pxget=()=>{try{return localStorage.getItem(PXK)||""}catch(e){return ""}};
 function pxu(h){const p=pxget();if(!p)throw new Error("не указан адрес посредника");return p.replace(/\/+$/,"")+"/?u="+encodeURIComponent(h)}
-async function ydown(){ystage="запрос ссылки на скачивание";const r=await yf(API+"/download?path="+encodeURIComponent(YP));if(r.status===404)return null;if(r.status===401)throw new Error("auth");if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json();ystage="скачивание файла";const f=await fetch(pxu(j.href));if(!f.ok)throw new Error("HTTP "+f.status);return f.json()}
-async function yup(){ystage="запрос ссылки для загрузки";const r=await yf(API+"/upload?path="+encodeURIComponent(YP)+"&overwrite=true");if(r.status===401)throw new Error("auth");if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json();ystage="загрузка файла";const u=await fetch(pxu(j.href),{method:"PUT",body:JSON.stringify(S)});if(!u.ok)throw new Error("HTTP "+u.status);Y.last=S.ts||0;ysave()}
+async function ydown(){ystage="запрос ссылки на скачивание";const r=await yf(API+"/download?path="+encodeURIComponent(YP));if(r.status===404)return null;if(r.status===401)throw new Error("auth");if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json();ystage="скачивание файла";const f=await fetch(pxu(j.href));if(!f.ok)throw new Error("HTTP "+f.status+" "+(await f.text()).slice(0,120));return f.json()}
+async function yup(){ystage="запрос ссылки для загрузки";const r=await yf(API+"/upload?path="+encodeURIComponent(YP)+"&overwrite=true");if(r.status===401)throw new Error("auth");if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json();ystage="загрузка файла";const u=await fetch(pxu(j.href),{method:"PUT",body:JSON.stringify(S)});if(!u.ok)throw new Error("HTTP "+u.status+" "+(await u.text()).slice(0,120));Y.last=S.ts||0;ysave()}
 function ytake(rm){S=Object.assign({tasks:[],habits:[],exp:[],inc:[],acc:[],debt:[],bud:0,week:{}},rm);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}Y.last=S.ts||0;ysave();render()}
 async function ysync(){
   if(!yok()||ybusy)return;ybusy=true;setSt("Синхронизация…");
@@ -254,7 +254,8 @@ async function ysync(){
 function syncSoon(){clearTimeout(ytimer);if(yok())ytimer=setTimeout(ysync,3000)}
 async function ytest(){ystage="проверка доступа к Диску";setSt("Проверяю…");try{const r=await yf(API+"?path="+encodeURIComponent("app:/"));if(!(r.ok||r.status===404)){setSt(r.status===401?"Токен не подошёл, войдите снова":"Ответ Диска: HTTP "+r.status);return}
     ystage="проверка посредника";if(!pxget()){setSt("Диск доступен. Укажите адрес посредника ниже");return}
-    const p=await fetch(pxget().replace(/\/+$/,"")+"/?ping=1");setSt(p.ok?"Диск и посредник работают":"Посредник ответил: HTTP "+p.status)}catch(e){yerr(e)}}
+    const px=pxget().replace(/\/+$/,""),p=await fetch(px+"/?ping=1");if(!p.ok){setSt("Посредник ответил: HTTP "+p.status);return}
+    ystage="связь посредника с Яндексом";const q=await fetch(px+"/?u="+encodeURIComponent("https://cloud-api.yandex.net/v1/disk/"));setSt(q.status<500?"Диск и посредник работают":"Посредник не достаёт до Яндекса: HTTP "+q.status+" "+(await q.text()).slice(0,100))}catch(e){yerr(e)}}
 function act(a,d){
   if(a==="addTask"){const t=$("#tt").value.trim();if(!t)return $("#tt").focus();S.tasks.push({id:uid(),t,due:$("#td").value,pr:$("#tp").value,who:$("#tw").value.trim(),rec:$("#tr").value.trim(),done:false})}
   else if(a==="calMode"){cal.m=d.m;cal.o=0}
