@@ -69,11 +69,12 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--ac);flex:none}
 .wd{font-weight:700;font-size:14px;margin-bottom:6px}.wd.t{color:var(--ac)}
 textarea{width:100%;min-height:64px;resize:vertical}
 .foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-main{position:relative}
+main{position:relative;overflow-x:clip}
+html,body{overscroll-behavior:none}body{touch-action:pan-y pinch-zoom}div[style*="overflow-x"]{touch-action:pan-x pan-y pinch-zoom}
 #dl{position:absolute;top:10px;right:16px;border:0;background:none;color:var(--mut);font:inherit;font-size:14px;padding:6px 0;cursor:pointer}
-@keyframes inl{from{opacity:0;transform:translateX(36px)}to{opacity:1;transform:none}}
-@keyframes inr{from{opacity:0;transform:translateX(-36px)}to{opacity:1;transform:none}}
-#view.sl{animation:inl .22s ease}#view.sr{animation:inr .22s ease}
+@keyframes inl{from{opacity:.4;transform:translateX(14px)}to{opacity:1;transform:none}}
+@keyframes inr{from{opacity:.4;transform:translateX(-14px)}to{opacity:1;transform:none}}
+#view.sl{animation:inl .18s ease-out}#view.sr{animation:inr .18s ease-out}
 @media (prefers-reduced-motion:reduce){#view.sl,#view.sr{animation:none}}
 </style>
 </head>
@@ -214,7 +215,7 @@ function vWeek(){
   return wd.map((d,i)=>`<div class="card"><div class="wd ${d===td?"t":""}">${DN[i]}, ${new Date(d).toLocaleDateString("ru-RU",{day:"numeric",month:"long"})}</div><textarea data-a="weekTx" data-d="${d}" placeholder="План на день" aria-label="План на ${DN[i]}">${esc(S.week[d]||"")}</textarea></div>`).join("");
 }
 function vData(){
-  return `<div class="card"><b>Синхронизация (Яндекс Диск)</b><p class="sub" id="sy" style="margin:6px 0 10px">${esc(ystat)}</p><div class="foot">${yok()?`<button class="btn" data-a="ysync">Синхронизировать</button><button class="btn ghost" data-a="ytest">Проверить соединение</button><button class="btn ghost" data-a="ylogout">Выйти</button>`:`<button class="btn" data-a="ylogin">Войти через Яндекс</button>`}</div><div class="row" style="margin:10px 0"><input class="grow" id="px" placeholder="Адрес посредника: https://….workers.dev" value="${esc(pxget())}" aria-label="Адрес посредника"><button class="btn ghost" data-a="pxsave">Сохранить</button></div><p class="sub" style="margin-bottom:0">Данные хранятся одним файлом planner.json в папке приложения на вашем Диске (раздел «Приложения»).</p><p class="sub" style="margin:6px 0 0;font-size:12px">Версия: 17</p></div>`;
+  return `<div class="card"><b>Синхронизация (Яндекс Диск)</b><p class="sub" id="sy" style="margin:6px 0 10px">${esc(ystat)}</p><div class="foot">${yok()?`<button class="btn" data-a="ysync">Синхронизировать</button><button class="btn ghost" data-a="ytest">Проверить соединение</button><button class="btn ghost" data-a="ylogout">Выйти</button>`:`<button class="btn" data-a="ylogin">Войти через Яндекс</button>`}</div><div class="row" style="margin:10px 0"><input class="grow" id="px" placeholder="Адрес посредника: https://….workers.dev" value="${esc(pxget())}" aria-label="Адрес посредника"><button class="btn ghost" data-a="pxsave">Сохранить</button></div><p class="sub" style="margin-bottom:0">Данные хранятся одним файлом planner.json в папке приложения на вашем Диске (раздел «Приложения»).</p><p class="sub" style="margin:6px 0 0;font-size:12px">Версия: 18</p></div>`;
 }
 
 document.addEventListener("click",e=>{
