@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Мой планер</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0f6e6e">
+<meta name="theme-color" content="#0b1f4d">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Планер">
@@ -89,7 +89,7 @@ try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r))}catc
 S.habits.forEach((h,i)=>{if(h.c==null)h.c=i%8});
 let tab=(location.hash||"#tasks").slice(1);if(!TABS.some(t=>t[0]===tab))tab="tasks";
 const $=s=>document.querySelector(s);
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const save=()=>{S.ts=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}syncSoon()};
 const uid=()=>Math.random().toString(36).slice(2,9);
 const iso=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*6e4);return z.toISOString().slice(0,10)};
 const today=()=>iso(new Date());
@@ -209,7 +209,7 @@ function vWeek(){
 function vData(){
   return `<div class="card"><p style="margin-top:0">Данные хранятся в этом браузере. Сохраняйте копию файлом: так вы перенесёте их на другое устройство или восстановите после сбоя.</p>
   <div class="foot"><button class="btn" data-a="export">Сохранить копию</button><label class="btn ghost" style="cursor:pointer">Загрузить копию<input type="file" id="imp" accept="application/json" hidden></label></div><div id="msg"></div></div>
-  <div class="card"><p style="margin-top:0"><b>Синхронизация между устройствами</b> — следующий шаг: вход в аккаунт и облачная база (Firebase, Supabase) или файл в вашем Google Drive.</p></div>`;
+  <div class="card"><b>Синхронизация (Яндекс Диск)</b><p class="sub" id="sy" style="margin:6px 0 10px">${esc(ystat)}</p><div class="foot">${yok()?`<button class="btn" data-a="ysync">Синхронизировать</button><button class="btn ghost" data-a="ytest">Проверить соединение</button><button class="btn ghost" data-a="ylogout">Выйти</button>`:`<button class="btn" data-a="ylogin">Войти через Яндекс</button>`}</div><p class="sub" style="margin-bottom:0">Данные хранятся одним файлом planner.json в папке приложения на вашем Диске (раздел «Приложения»).</p></div>`;
 }
 
 document.addEventListener("click",e=>{
@@ -224,6 +224,31 @@ document.addEventListener("change",e=>{
   if(b.dataset&&b.dataset.a==="weekTx"){S.week[b.dataset.d]=b.value;save()}
 });
 document.addEventListener("input",e=>{const i=e.target.id;if(i==="eb"){S.bud=num(e.target.value);save()}if(["ea","ec","et","eb"].includes(i))liveDash()});
+const YID="1f5f8956cd144f9b82b7a4e8bca74246",YK="planner-yd",API="https://cloud-api.yandex.net/v1/disk/resources",YP="app:/planner.json";
+let Y={};try{Y=JSON.parse(localStorage.getItem(YK))||{}}catch(e){}
+const ysave=()=>{try{localStorage.setItem(YK,JSON.stringify(Y))}catch(e){}};
+const yok=()=>!!(Y.t&&Y.exp>Date.now());
+let ystat=yok()?"Вход выполнен":"Вход не выполнен",ybusy=false,ytimer;
+function setSt(m){ystat=m;const e=$("#sy");if(e)e.textContent=m}
+const yf=(u,o={})=>fetch(u,{...o,headers:{Authorization:"OAuth "+Y.t}});
+function yerr(e){if(e.message==="auth"){Y={};ysave();setSt("Нужно войти снова");render();return}
+  setSt(e instanceof TypeError?"Браузер не смог связаться с Яндекс Диском (запрос заблокирован или нет сети): "+e.message:"Ошибка синхронизации: "+e.message)}
+async function ydown(){const r=await yf(API+"/download?path="+encodeURIComponent(YP));if(r.status===404)return null;if(r.status===401)throw new Error("auth");if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json(),f=await fetch(j.href);if(!f.ok)throw new Error("HTTP "+f.status);return f.json()}
+async function yup(){const r=await yf(API+"/upload?path="+encodeURIComponent(YP)+"&overwrite=true");if(r.status===401)throw new Error("auth");if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json(),u=await fetch(j.href,{method:"PUT",body:JSON.stringify(S)});if(!u.ok)throw new Error("HTTP "+u.status);Y.last=S.ts||0;ysave()}
+function ytake(rm){S=Object.assign({tasks:[],habits:[],exp:[],inc:[],acc:[],debt:[],bud:0,week:{}},rm);try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}Y.last=S.ts||0;ysave();render()}
+async function ysync(){
+  if(!yok()||ybusy)return;ybusy=true;setSt("Синхронизация…");
+  try{const rm=await ydown(),loc=S.ts||0,last=Y.last||0;
+    if(!rm)await yup();
+    else{const rt=rm.ts||0,cl=loc>last,cr=rt>last;
+      if(cr&&!cl)ytake(rm);
+      else if(cl&&!cr)await yup();
+      else if(cl&&cr){if(confirm("На Диске и на этом устройстве есть разные изменения.\nОК — взять версию с Диска, Отмена — оставить эту версию и перезаписать Диск."))ytake(rm);else await yup()}}
+    setSt("Синхронизировано в "+new Date().toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}))}
+  catch(e){yerr(e)}
+  ybusy=false}
+function syncSoon(){clearTimeout(ytimer);if(yok())ytimer=setTimeout(ysync,3000)}
+async function ytest(){setSt("Проверяю…");try{const r=await yf(API+"?path="+encodeURIComponent("app:/"));setSt(r.ok||r.status===404?"Соединение с Яндекс Диском работает":r.status===401?"Токен не подошёл, войдите снова":"Ответ Диска: HTTP "+r.status)}catch(e){yerr(e)}}
 function act(a,d){
   if(a==="addTask"){const t=$("#tt").value.trim();if(!t)return $("#tt").focus();S.tasks.push({id:uid(),t,due:$("#td").value,pr:$("#tp").value,who:$("#tw").value.trim(),rec:$("#tr").value.trim(),done:false})}
   else if(a==="calMode"){cal.m=d.m;cal.o=0}
@@ -242,6 +267,10 @@ function act(a,d){
   else if(a==="addDebt"){const n=$("#dn").value.trim(),v=num($("#da").value);if(!n||!v)return $(n?"#da":"#dn").focus();S.debt.push({id:uid(),name:n,a:v,dir:$("#dd").value})}
   else if(a==="delDebt")S.debt=S.debt.filter(x=>x.id!==d.id);
   else if(a==="delExp")S.exp=S.exp.filter(x=>x.id!==d.id);
+  else if(a==="ylogin"){location.href="https://oauth.yandex.ru/authorize?response_type=token&client_id="+YID;return}
+  else if(a==="ysync"){ysync();return}
+  else if(a==="ytest"){ytest();return}
+  else if(a==="ylogout"){Y={};ysave();ystat="Вход не выполнен";render();return}
   else if(a==="export"){exportData();return}
   save();render();
 }
@@ -258,7 +287,11 @@ function importData(f){
 window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(TABS.some(t=>t[0]===h)&&h!==tab){tab=h;render()}});
 if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+(function(){const h=location.hash;if(h.includes("access_token=")){const p=new URLSearchParams(h.slice(1));if(p.get("access_token")){Y={t:p.get("access_token"),exp:Date.now()+(parseInt(p.get("expires_in"))||31536000)*1000,last:Y.last||0};ysave();tab="data";ystat="Вход выполнен"}history.replaceState(null,"",location.pathname+"#data")}})();
 render();
+if(yok())ysync();
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&yok())ysync()});
+addEventListener("online",()=>{if(yok())ysync()});
 </script>
 </body>
 </html>
