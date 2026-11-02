@@ -81,20 +81,6 @@ background-repeat:no-repeat;background-position:right 14px center;background-siz
 select:hover{border-color:var(--mut)}select:active{background-color:var(--acs)}
 option{background:var(--sf);color:var(--ink)}
 input{border-radius:12px}input::placeholder{color:var(--mut);opacity:.8}
-@media (min-width:900px){
-main{max-width:980px;padding:24px 24px 110px}
-h1{font-size:28px}
-#view{column-count:2;column-gap:14px}
-#dash{display:contents}
-.card,.tiles{break-inside:avoid}
-#view>.tiles,#view>.sub,#dash>.tiles,#dash>.sub,.card:has(.mg){column-span:all}
-#view[data-tab="cal"],#view[data-tab="data"]{column-count:1}
-#view[data-tab="data"]{max-width:640px}
-#view[data-tab="cal"] .cd{min-height:92px;font-size:17px}#view[data-tab="cal"] .cd .p{font-size:15px}
-nav{left:50%;right:auto;transform:translateX(-50%);width:min(980px,100%);border:1px solid var(--ln);border-bottom:0;border-radius:14px 14px 0 0}
-nav button{font-size:14px;padding:10px 0}
-}
-@media (min-width:1400px){main{max-width:1360px}#view{column-count:3}nav{width:min(1360px,100%)}}
 </style>
 </head>
 <body>
@@ -128,7 +114,7 @@ function render(){
   $("#title").textContent=TABS.find(t=>t[0]===tab)[1];
   $("#dl").textContent=tab==="data"?"‹ Назад":"Данные ›";
   $("#date").textContent=new Date().toLocaleDateString("ru-RU",{weekday:"long",day:"numeric",month:"long"});
-  $("#view").dataset.tab=tab;$("#view").innerHTML=({cal:vCal,tasks:vTasks,habits:vHabits,money:vMoney,data:vData})[tab]();
+  $("#view").innerHTML=({cal:vCal,tasks:vTasks,habits:vHabits,money:vMoney,data:vData})[tab]();
 }
 
 function bars(vals,labs,f){const mx=Math.max(1,...vals),W=300,H=110,bw=W/vals.length;return `<svg viewBox="0 0 ${W} ${H+22}" width="100%" role="img" aria-label="График">${vals.map((v,i)=>{const h=v/mx*H,x=i*bw+bw/2;return `<rect x="${i*bw+bw*.2}" y="${H-h}" width="${bw*.6}" height="${v?Math.max(h,2):0}" rx="4" style="fill:var(--ac)"/><text x="${x}" y="${H+15}" text-anchor="middle" font-size="11" style="fill:var(--mut)">${labs[i]}</text>${v?`<text x="${x}" y="${Math.max(H-h-4,10)}" text-anchor="middle" font-size="10" style="fill:var(--ink)">${f(v)}</text>`:""}`}).join("")}</svg>`}
@@ -237,7 +223,7 @@ function vMoney(){
   ${last.length?`<div class="card"><b>Последние записи</b>${last.map(e=>`<div class="item"><span class="tx">${e.k==="inc"?"Доход":esc(e.c)}${e.n?" — "+esc(e.n):""}<div class="due">${e.d}</div></span><b style="color:${e.k==="inc"?"var(--ac)":"inherit"}">${e.k==="inc"?"+":"−"}${fmt(e.a)}</b><button class="x" data-a="${e.k==="inc"?"delInc":"delExp"}" data-id="${e.id}" aria-label="Удалить">×</button></div>`).join("")}</div>`:""}`;
 }
 function vData(){
-  return `<div class="card"><b>Синхронизация (Яндекс Диск)</b><p class="sub" id="sy" style="margin:6px 0 10px">${esc(ystat)}</p><div class="foot">${yok()?`<button class="btn" data-a="ysync">Синхронизировать</button><button class="btn ghost" data-a="ytest">Проверить соединение</button><button class="btn ghost" data-a="ylogout">Выйти</button>`:`<button class="btn" data-a="ylogin">Войти через Яндекс</button>`}</div><div class="row" style="margin:10px 0"><input class="grow" id="px" placeholder="Адрес посредника: https://….workers.dev" value="${esc(pxget())}" aria-label="Адрес посредника"><button class="btn ghost" data-a="pxsave">Сохранить</button></div><p class="sub" style="margin-bottom:0">Данные хранятся одним файлом planner.json в папке приложения на вашем Диске (раздел «Приложения»).</p><p class="sub" style="margin:6px 0 0;font-size:12px">Версия: 0.22</p></div>`;
+  return `<div class="card"><b>Синхронизация (Яндекс Диск)</b><p class="sub" id="sy" style="margin:6px 0 10px">${esc(ystat)}</p><div class="foot">${yok()?`<button class="btn" data-a="ysync">Синхронизировать</button><button class="btn ghost" data-a="ytest">Проверить соединение</button><button class="btn ghost" data-a="ylogout">Выйти</button>`:`<button class="btn" data-a="ylogin">Войти через Яндекс</button>`}</div><div class="row" style="margin:10px 0"><input class="grow" id="px" placeholder="Адрес посредника: https://….workers.dev" value="${esc(pxget())}" aria-label="Адрес посредника"><button class="btn ghost" data-a="pxsave">Сохранить</button></div><p class="sub" style="margin-bottom:0">Данные хранятся одним файлом planner.json в папке приложения на вашем Диске (раздел «Приложения»).</p><p class="sub" style="margin:6px 0 0;font-size:12px">Версия: 0.21</p></div>`;
 }
 
 document.addEventListener("click",e=>{
