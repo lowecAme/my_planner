@@ -80,6 +80,7 @@ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/sv
 background-repeat:no-repeat;background-position:right 14px center;background-size:16px;transition:border-color .15s,background-color .15s}
 select:hover{border-color:var(--mut)}select:active{background-color:var(--acs)}
 option{background:var(--sf);color:var(--ink)}
+select{text-overflow:ellipsis;white-space:nowrap;overflow:hidden;padding-left:14px}
 input{border-radius:12px}input::placeholder{color:var(--mut);opacity:.8}
 </style>
 </head>
@@ -212,7 +213,7 @@ function donut(sl,center){const C=2*Math.PI*40,t=sl.reduce((a,x)=>a+x.v,0);let o
 function vMoney(){
   const last=[...S.exp.map(e=>({...e,k:"exp"})),...S.inc.map(e=>({...e,k:"inc"}))].sort((a,b)=>b.d.localeCompare(a.d)).slice(0,10);
   const ab=a=>a.b0+sum(S.inc.filter(e=>e.acc===a.id),e=>e.a)-sum(S.exp.filter(e=>e.acc===a.id),e=>e.a);
-  return `<div class="card"><div class="fg" style="margin-top:0"><select id="et" aria-label="Тип"><option value="exp">Расход</option><option value="inc">Доход</option></select><input id="ea" type="number" inputmode="decimal" placeholder="Сумма" aria-label="Сумма"><select id="ec" aria-label="Категория">${CATS.map(c=>`<option>${c}</option>`).join("")}</select><select id="eacc" aria-label="Счёт">${S.acc.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join("")}<option value="">без счёта</option></select></div>
+  return `<div class="card"><div class="fg" style="margin-top:0"><select id="et" aria-label="Тип"><option value="exp">Расход</option><option value="inc">Доход</option></select><input id="ea" type="number" inputmode="decimal" placeholder="Сумма" aria-label="Сумма"><select id="ec" aria-label="Категория">${CATS.map(c=>`<option>${c}</option>`).join("")}</select><select id="eacc" aria-label="Счёт" style="grid-column:1/-1">${S.acc.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join("")}<option value="">без счёта</option></select></div>
   <div class="row" style="margin-top:8px"><input class="grow" id="en" placeholder="Заметка (необязательно)" aria-label="Заметка"><button class="btn" data-a="addEntry">Записать</button></div></div>
   <div class="card"><div class="row"><span class="grow">Дневной бюджет</span><input id="eb" type="number" inputmode="decimal" value="${S.bud||""}" placeholder="0" aria-label="Дневной бюджет" style="width:120px"></div></div>
   <div id="dash">${dash(null)}</div>
@@ -223,7 +224,7 @@ function vMoney(){
   ${last.length?`<div class="card"><b>Последние записи</b>${last.map(e=>`<div class="item"><span class="tx">${e.k==="inc"?"Доход":esc(e.c)}${e.n?" — "+esc(e.n):""}<div class="due">${e.d}</div></span><b style="color:${e.k==="inc"?"var(--ac)":"inherit"}">${e.k==="inc"?"+":"−"}${fmt(e.a)}</b><button class="x" data-a="${e.k==="inc"?"delInc":"delExp"}" data-id="${e.id}" aria-label="Удалить">×</button></div>`).join("")}</div>`:""}`;
 }
 function vData(){
-  return `<div class="card"><b>Синхронизация (Яндекс Диск)</b><p class="sub" id="sy" style="margin:6px 0 10px">${esc(ystat)}</p><div class="foot">${yok()?`<button class="btn" data-a="ysync">Синхронизировать</button><button class="btn ghost" data-a="ytest">Проверить соединение</button><button class="btn ghost" data-a="ylogout">Выйти</button>`:`<button class="btn" data-a="ylogin">Войти через Яндекс</button>`}</div><div class="row" style="margin:10px 0"><input class="grow" id="px" placeholder="Адрес посредника: https://….workers.dev" value="${esc(pxget())}" aria-label="Адрес посредника"><button class="btn ghost" data-a="pxsave">Сохранить</button></div><p class="sub" style="margin-bottom:0">Данные хранятся одним файлом planner.json в папке приложения на вашем Диске (раздел «Приложения»).</p><p class="sub" style="margin:6px 0 0;font-size:12px">Версия: 0.21</p></div>`;
+  return `<div class="card"><b>Синхронизация (Яндекс Диск)</b><p class="sub" id="sy" style="margin:6px 0 10px">${esc(ystat)}</p><div class="foot">${yok()?`<button class="btn" data-a="ysync">Синхронизировать</button><button class="btn ghost" data-a="ytest">Проверить соединение</button><button class="btn ghost" data-a="ylogout">Выйти</button>`:`<button class="btn" data-a="ylogin">Войти через Яндекс</button>`}</div><div class="row" style="margin:10px 0"><input class="grow" id="px" placeholder="Адрес посредника: https://….workers.dev" value="${esc(pxget())}" aria-label="Адрес посредника"><button class="btn ghost" data-a="pxsave">Сохранить</button></div><p class="sub" style="margin-bottom:0">Данные хранятся одним файлом planner.json в папке приложения на вашем Диске (раздел «Приложения»).</p><p class="sub" style="margin:6px 0 0;font-size:12px">Версия: 0.23</p></div>`;
 }
 
 document.addEventListener("click",e=>{
